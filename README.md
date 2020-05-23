@@ -1,7 +1,8 @@
-# App "News with Django3, DRF,Cron, Postgresql"
-* Link to api working api: http://boiling-oasis-95257.herokuapp.com/
-* Postman collection: https://www.getpostman.com/collections/1ebdf9fcc78aeb97838c
 
+# App "News with Django3, DRF,Cron, Postgresql"
+* Link to api working api: http://boiling-oasis-95257.herokuapp.com/api/v1/post/list/
+* Postman collection: https://www.getpostman.com/collections/1ebdf9fcc78aeb97838c
+(Collection consist of variables like api_v1_url and all requests than you can do to app)
 ##Local development
 To run app in localhost you need to perform in work dir
 ```bash
