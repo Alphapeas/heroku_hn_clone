@@ -6,11 +6,11 @@
 ##Local development
 To run app in localhost you need to perform in work dir
 ```bash
-$ git clone https://github.com/alphapeas/heroku_news.git
+$ git clone https://github.com/alphapeas/heroku_hn_clone.git
 ```
 Than go to project dir, create virtual environment and get project packages
 ```bash
-$ cd heroku_news
+$ cd heroku_hn_clone
 $ python3.7 -m venv env
 $ pip install -r requirements.txt
 ```
