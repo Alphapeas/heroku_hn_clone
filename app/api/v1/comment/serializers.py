@@ -6,6 +6,28 @@ from post.models import Post
 from app.api.v1.user.serializers import UserSerializer
 
 
+class FilterReviewListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        data = data.filter(parent=None)
+        return super().to_representation(data)
+
+
+class RecursiveSerializer(serializers.Serializer):
+    def to_representation(self, value):
+        serializer = self.parent.parent.__class__(value, context=self.context)
+        return serializer.data
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    children = RecursiveSerializer(many=True)
+    user = UserSerializer()
+
+    class Meta:
+        list_serializer_class = FilterReviewListSerializer
+        model = Comment
+        fields = ["id", 'post', 'user', "content", "children"]
+
+
 class CommentCreateSerializer(ModelSerializer):
     """Creation of comment, if no parent - its root comment, if parent exist - it`s  reply"""
     class Meta:
@@ -19,38 +41,9 @@ class CommentCreateSerializer(ModelSerializer):
         return attrs
 
 
-class PostCommentSerializer(ModelSerializer):
-    """Post comments"""
-    user = UserSerializer()
-    parent = serializers.CharField()
-
-    class Meta:
-        model = Post
-        fields = ['id', 'content', 'user', 'parent']
-
-
-class CommentChildSerializers(ModelSerializer):
-    """Child comments is comments where parent is not null"""
-    class Meta:
-        model = Comment
-        fields = ['user', 'post', 'content', 'parent']
-
-
-class CommentListSerializer(ModelSerializer):
-    replies = SerializerMethodField()
-    user = UserSerializer()
-    post = PostCommentSerializer()
+class CommentUpdateDeleteSerializer(ModelSerializer):
+    """Update comment or delete"""
 
     class Meta:
         model = Comment
-        fields = ['user', 'post', 'content', 'replies']
-
-    def get_replies(self, obj):
-        if obj.any_children:
-            return CommentChildSerializers(obj.children(), many=True).data
-
-
-class CommentDeleteUpdateSerializer(ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ['id', 'content']
+        fields = ['content']

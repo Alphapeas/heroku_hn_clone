@@ -1,73 +1,46 @@
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 
-from rest_framework import permissions
-from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, CreateAPIView, RetrieveUpdateAPIView
-from rest_framework.mixins import CreateModelMixin, ListModelMixin
+from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from post.models import Post
 from .permissions import IsOwnerOrReadOnly
-from .serializers import PostSerializers, PostUpdateCreateSerializers
+from .serializers import (
+    PostCUDSerializer,
+    PostListSerializer,
+    PostDetailSerializer
+)
 from .paginations import PostApiPagination
 
 
-class PostListAPIView(ListAPIView, CreateModelMixin):
-    serializer_class = PostSerializers
-    queryset = Post.objects.all()
+class PostViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = PostApiPagination
-    permission_classes = [permissions.AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+    def get_serializer_class(self):
+        if self.action == "list":
+            return PostListSerializer
+        elif self.action == 'create' or self.action == 'delete' or self.action == 'update'\
+                or self.action == "partial_update":
+            return PostCUDSerializer
+        else:
+            return PostDetailSerializer
 
-    def get_queryset(self):
-        posts = Post.objects.filter().annotate(
-            rating=Count('votes')
-        )
-        return posts
+    def get_queryset(self, pk=None):
+        return Post.objects.filter().annotate(rating=Count('votes'))
 
-
-class PostDetailAPIView(RetrieveAPIView):
-    serializer_class = PostSerializers
-    lookup_field = 'pk'
-    permission_classes = [permissions.AllowAny]
-
-    def get_queryset(self):
-        posts = Post.objects.filter().annotate(
-            rating=Count('votes')
-        )
-        return posts
-
-
-class PostCreateAPIView(CreateAPIView, ListModelMixin):
-    queryset = Post.objects.all()
-    serializer_class = PostUpdateCreateSerializers
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class PostUpdateAPIView(RetrieveUpdateAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostUpdateCreateSerializers
-    permission_classes = [IsOwnerOrReadOnly]
-    lookup_field = 'pk'
-
-    def perform_update(self, serializer):
-        serializer.save(modified_by=self.request.user)
-
-
-class PostDeleteAPIView(DestroyAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializers
-    permission_classes = [permissions.IsAdminUser]
-    lookup_field = 'pk'
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve":
+            self.permission_classes = [permissions.AllowAny]
+        elif self.action == "create":
+            self.permission_classes = [permissions.IsAuthenticated]
+        elif self.action == "update" or self.action == "partial_update":
+            self.permission_classes = [IsOwnerOrReadOnly]
+        elif self.action == "destroy":
+            self.permission_classes = [permissions.IsAdminUser]
+        return super().get_permissions()
 
 
 class AddOrDeleteVoteAPIView(APIView):

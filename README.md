@@ -1,8 +1,9 @@
 
 # App "News with Django3, DRF,Cron, Postgresql"
-* Link to api working api: http://boiling-oasis-95257.herokuapp.com/api/v1/post/list/
+* Link to api working api: https://hidden-scrubland-22936.herokuapp.com/api/v1/news/
 * Postman collection: https://www.getpostman.com/collections/1ebdf9fcc78aeb97838c
-(Collection consist of variables like api_v1_url and all requests than you can do to app)
+* You need add header "Authorization" in Postman app with value Token {token_that_you_take_from_login}
+* Collection consist of variables like api_v1_url and all requests than you can do
 ##Local development
 To run app in localhost you need to perform in work dir
 ```bash
@@ -32,15 +33,19 @@ $ heroku container:login
 ```
 You need to rebuilt Docker container, go to project root and run:
 ```
-$ docker build -t registry.heroku.com/boiling-oasis-95257/web .
+$ docker build -t registry.heroku.com/hidden-scrubland-22936/web .
 ```
 Push your changes
 ```
-$ docker push registry.heroku.com/boiling-oasis-95257/web
+$ docker push registry.heroku.com/hidden-scrubland-22936/web
 ```
-Now release container to Heroku and run migrations
+Now release container to Heroku
 ```bash
-$ heroku container:release -a boiling-oasis-95257 web
-$ heroku run python manage.py makemigrations -a boiling-oasis-95257
-$ heroku run python manage.py migrate -a boiling-oasis-95257
+$ heroku container:release -a hidden-scrubland-22936 web
 ```
+Go to Heroku Dashboard and add Postgresql addon to your app, than apply migrations
+```bash
+$ heroku run python manage.py makemigrations -a hidden-scrubland-22936
+$ heroku run python manage.py migrate -a hidden-scrubland-22936
+```
+App have been successfully deployed)

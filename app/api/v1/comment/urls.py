@@ -1,10 +1,7 @@
-from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
-from app.api.v1.comment.views import CommentCreateAPIView, CommentListAPIView, CommentUpdateAPIView, CommentDeleteAPIView
+from app.api.v1.comment.views import CommentViewSet
 
-
-urlpatterns = [
-    path('comment/create/', CommentCreateAPIView.as_view(), name='create comment'),
-    path('comment/update/<pk>/', CommentUpdateAPIView.as_view(), name='update comment'),
-    path('comment/delete/<pk>/', CommentDeleteAPIView.as_view(), name='delete comment'),
-]
+router = DefaultRouter()
+router.register(r'comments', CommentViewSet, basename='comments')
+urlpatterns = router.urls

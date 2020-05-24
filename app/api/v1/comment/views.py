@@ -1,47 +1,39 @@
-from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView, RetrieveUpdateAPIView, DestroyAPIView
-from rest_framework.mixins import DestroyModelMixin
-from rest_framework import permissions
+from rest_framework import permissions, viewsets, mixins
 
 from comment.models import Comment
 
 from .permissions import IsOwnerOrReadOnly
-from .serializers import CommentCreateSerializer, CommentListSerializer, CommentDeleteUpdateSerializer
+from .serializers import CommentCreateSerializer, CommentUpdateDeleteSerializer
 
 
-class CommentCreateAPIView(CreateAPIView):
-    """Comment creation"""
-    queryset = Comment.objects.all()
-    serializer_class = CommentCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class CommentViewSet(viewsets.GenericViewSet,
+                     mixins.CreateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.DestroyModelMixin,
+                     mixins.UpdateModelMixin):
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def get_serializer_class(self):
+        if self.action == 'retrieve' or self.action == 'create':
+            return CommentCreateSerializer
+        elif self.action == 'destroy' or self.action == 'update' or self.action == 'partial_update':
+            return CommentUpdateDeleteSerializer
 
+    def get_queryset(self, pk=None):
+        if self.action == 'list':
+            query = self.request.GET.get('post')
+            if query:
+                queryset = Comment.objects.filter(post=query)
+                return queryset
 
-class CommentListAPIView(ListAPIView):
-    """Comments list or comments of concrete post"""
-    serializer_class = CommentListSerializer
-    permission_classes = [permissions.AllowAny]
+        return Comment.objects.all()
 
-    def get_queryset(self):
-        queryset = Comment.objects.filter(parent=None)
-        query = self.request.GET.get('post')
-        if query:
-            queryset = queryset.filter(post=query)
-        return queryset
-
-
-class CommentUpdateAPIView(RetrieveUpdateAPIView, UpdateAPIView):
-    """Comments list or comments of concrete post"""
-    queryset = Comment.objects.all()
-    serializer_class = CommentDeleteUpdateSerializer
-    lookup_field = 'pk'
-    permission_classes = [IsOwnerOrReadOnly]
-
-
-class CommentDeleteAPIView(DestroyAPIView):
-    """Delete comment"""
-    queryset = Comment.objects.all()
-    serializer_class = CommentDeleteUpdateSerializer
-    permission_classes = [permissions.IsAdminUser]
-    lookup_field = 'pk'
+    def get_permissions(self):
+        if self.action == "retrieve":
+            self.permission_classes = [permissions.AllowAny]
+        elif self.action == "create":
+            self.permission_classes = [permissions.IsAuthenticated]
+        elif self.action == "update" or self.action == "partial_update":
+            self.permission_classes = [IsOwnerOrReadOnly]
+        elif self.action == "destroy":
+            self.permission_classes = [permissions.IsAdminUser]
+        return super().get_permissions()
